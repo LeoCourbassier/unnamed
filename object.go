@@ -7,7 +7,6 @@ import (
 	"math"
 	"math/rand"
 	"path/filepath"
-	"time"
 
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
@@ -256,62 +255,4 @@ func (o *Object) Draw(screen *ebiten.Image) {
 		B: 0x00,
 	})
 	MainCamera.DrawText(screen, fmt.Sprintf("%.0f/%.0f", o.Health, o.MaxHealth), int(o.X()+o.Width()/2-20), int(o.Y()-20))
-}
-
-func (o *Object) ReceiveDamage() {
-
-}
-
-func (o *Object) Combat(foes []Object) {
-	var indexesToRemove []int
-	for i, e := range Enemies {
-		if Player.InAttackRange(e) && Player.IsAttacking {
-			canTakeDmg := true
-			for _, c := range e.Damage {
-				if c.Giver == Player.ID && c.LastTick {
-					canTakeDmg = false
-					break
-				}
-			}
-
-			if !canTakeDmg {
-				continue
-			}
-
-			dmg := Player.AttackDamage
-			if Player.IsStrongAttack && Player.WillCritAttack() {
-				dmg *= 2
-				Player.Crited = true
-				Message = MessageFeedback{
-					Message: "Crit!",
-					Seconds: 0.5,
-					X:       Player.X() + Player.Width()/2,
-					Y:       Player.Y() - 15,
-					Time:    time.Now().UnixNano(),
-				}
-			}
-			Enemies[i].Health -= dmg
-			Enemies[i].Options.ColorM.Translate(1, 1, 1, 0)
-
-			Enemies[i].Damage = append(Enemies[i].Damage, CombatRegistry{
-				Giver:    Player.ID,
-				Quantity: int(dmg),
-				LastTick: true,
-			})
-
-			if Enemies[i].Health < 1 {
-				indexesToRemove = append(indexesToRemove, i)
-			} else {
-				go func(i int) {
-					time.Sleep(100 * time.Millisecond)
-					Enemies[i].Options.ColorM.Translate(-1, -1, -1, 0)
-				}(i)
-			}
-		}
-	}
-
-	for i := 0; i < len(indexesToRemove); i++ {
-		j := indexesToRemove[i]
-		Enemies = append(Enemies[:j], Enemies[j+1:]...)
-	}
 }

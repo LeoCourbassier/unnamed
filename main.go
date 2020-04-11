@@ -18,7 +18,7 @@ import (
 var Player PlayerObject
 var Coin Object
 var Tiles []Object
-var Enemies []Object
+var Enemies []PlayerObject
 var Background []Object
 var keys []Control
 var Debug bool
@@ -101,7 +101,7 @@ func init() {
 	floor.Options.GeoM.Translate(0, 533)
 	Tiles = append(Tiles, floor)
 
-	enemy := CreateObject(80, 100, "assets/bat/bat_walk0.png", -1, -1, 0, 0, true, true, 1)
+	enemy := CreateEnemy(80, 100, "assets/bat/bat_walk0.png", -1, -1, 0, 0, true, true, 1)
 	for i := 1; i < 5; i++ {
 		img, _, err := ebitenutil.NewImageFromFile(filepath.FromSlash(fmt.Sprintf("assets/bat/bat_walk%d.png", i)), ebiten.FilterDefault)
 		if err != nil {
@@ -114,7 +114,7 @@ func init() {
 	enemy.Health = 100
 	Enemies = append(Enemies, enemy)
 
-	enemy = CreateObject(80, 100, "assets/bat/bat_walk0.png", -1, -1, 0, 0, true, true, 2)
+	enemy = CreateEnemy(80, 100, "assets/bat/bat_walk0.png", -1, -1, 0, 0, true, true, 2)
 	for i := 1; i < 5; i++ {
 		img, _, err := ebitenutil.NewImageFromFile(filepath.FromSlash(fmt.Sprintf("assets/bat/bat_walk%d.png", i)), ebiten.FilterDefault)
 		if err != nil {
@@ -179,10 +179,8 @@ func update(screen *ebiten.Image) error {
 
 	applyGravity()
 
-	Player.Combat(Enemies)
-
 	for _, e := range Enemies {
-		e.Update(screen)
+		e.Object.Update(screen)
 	}
 
 	MainCamera.Draw(Coin, 0, screen)

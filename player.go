@@ -128,8 +128,9 @@ func jumpFn(t float64) float64 {
 }
 
 func (p *PlayerObject) Update(screen *ebiten.Image) {
-	p.Animation.Update()
+	p.Animation.UpdatePlayer(p)
 	p.CheckInputs()
+	p.Combat(&Enemies)
 	p.Draw(screen)
 }
 
@@ -220,5 +221,63 @@ func (p *PlayerObject) CheckInputs() {
 			}
 			p.Animation.LoopAnimation = true
 		}
+	}
+}
+
+func (o *PlayerObject) ReceiveDamage() {
+
+}
+
+func (o *PlayerObject) Combat(foes *[]PlayerObject) {
+	var indexesToRemove []int
+	for i, e := range *foes {
+		if o.InAttackRange(e.Object) && o.IsAttacking {
+			canTakeDmg := true
+			for _, c := range e.Damage {
+				if c.Giver == o.ID && c.LastTick {
+					canTakeDmg = false
+					break
+				}
+			}
+
+			if !canTakeDmg {
+				continue
+			}
+
+			dmg := o.AttackDamage
+			if o.IsStrongAttack && o.WillCritAttack() {
+				dmg *= 2
+				o.Crited = true
+				Message = MessageFeedback{
+					Message: "Crit!",
+					Seconds: 0.5,
+					X:       o.X() + o.Width()/2,
+					Y:       o.Y() - 15,
+					Time:    time.Now().UnixNano(),
+				}
+			}
+			(*foes)[i].Health -= dmg
+			(*foes)[i].Options.ColorM.Translate(1, 1, 1, 0)
+
+			(*foes)[i].Damage = append((*foes)[i].Damage, CombatRegistry{
+				Giver:    o.ID,
+				Quantity: int(dmg),
+				LastTick: true,
+			})
+
+			if (*foes)[i].Health < 1 {
+				indexesToRemove = append(indexesToRemove, i)
+			} else {
+				go func(i int) {
+					time.Sleep(100 * time.Millisecond)
+					(*foes)[i].Options.ColorM.Translate(-1, -1, -1, 0)
+				}(i)
+			}
+		}
+	}
+
+	for i := 0; i < len(indexesToRemove); i++ {
+		j := indexesToRemove[i]
+		*foes = append((*foes)[:j], (*foes)[j+1:]...)
 	}
 }

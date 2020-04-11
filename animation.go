@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 type AnimationsSprite int
 
 type Animations struct {
@@ -42,19 +40,19 @@ const (
 	AF5 AnimationsSprite = iota
 )
 
-func (a *Animations) Update() {
-	fmt.Println(a.Ticks)
+func (a *Animations) UpdatePlayer(me *PlayerObject) {
+	a.Ticks++
 	if a.Ticks > a.AnimationTicks {
 		a.Ticks = 0
 		if a.FirstAnimation != a.LastAnimation {
 			a.CurrentAnimation++
 		}
 		if a.CurrentAnimation > a.LastAnimation {
-			if Player.IsAttacking {
-				Player.IsAttacking = false
+			if me.IsAttacking {
+				me.IsAttacking = false
 				for i := range Enemies {
 					for j := range Enemies[i].Damage {
-						if Enemies[i].Damage[j].LastTick && Enemies[i].Damage[j].Giver == Player.ID {
+						if Enemies[i].Damage[j].LastTick && Enemies[i].Damage[j].Giver == me.ID {
 							Enemies[i].Damage[j].LastTick = false
 							break
 						}
@@ -66,6 +64,23 @@ func (a *Animations) Update() {
 				a.AnimationTicks = 7
 				a.LoopAnimation = true
 			}
+			if a.LoopAnimation {
+				a.CurrentAnimation = a.FirstAnimation
+			} else {
+				a.CurrentAnimation = a.LastAnimation
+			}
+		}
+	}
+}
+
+func (a *Animations) Update() {
+	a.Ticks++
+	if a.Ticks > a.AnimationTicks {
+		a.Ticks = 0
+		if a.FirstAnimation != a.LastAnimation {
+			a.CurrentAnimation++
+		}
+		if a.CurrentAnimation > a.LastAnimation {
 			if a.LoopAnimation {
 				a.CurrentAnimation = a.FirstAnimation
 			} else {
